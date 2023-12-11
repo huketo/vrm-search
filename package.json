@@ -1,0 +1,34 @@
+{
+	"name": "vrm-to-vector",
+	"version": "1.0.0",
+	"description": "A project for AI analysis of 3D models, involving the conversion of VRM files to a cubemap format and storing them in a vector database.",
+	"main": "index.js",
+	"type": "module",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "github.com/huketo/vrm-to-vector.git"
+	},
+	"keywords": [
+		"vrm",
+		"3d",
+		"three.js",
+		"ai",
+		"vector",
+		"weaviate"
+	],
+	"author": "huketo",
+	"license": "MIT",
+	"dependencies": {
+		"@pixiv/three-vrm": "^2.0.6",
+		"canvas": "^2.11.2",
+		"events": "^3.3.0",
+		"fs": "^0.0.1-security",
+		"gl": "^6.0.2",
+		"node-three-gltf": "^1.5.0",
+		"pngjs": "^7.0.0",
+		"three": "^0.154.0"
+	}
+}
