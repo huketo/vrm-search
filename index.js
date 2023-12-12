@@ -1,86 +1,82 @@
-import * as THREE from "three";
-import { GLTFLoader } from "node-three-gltf";
-// import { GLTFLoader } from "./lib/loaders/GLTFLoader.js";
-import { VRMLoaderPlugin } from "@pixiv/three-vrm";
-import { createCanvas } from "./lib/canvas/index.js";
-import fs from "fs";
-import { PNG } from "pngjs";
+import puppeteer from 'puppeteer';
 
-// Create a canvas and renderer setup
-const width = 2048;
-const height = 2048;
+// camera-orbit="180.0deg 90.00deg 4m" => front
+// camera-orbit="0.0deg 90.00deg 4m" => back
+// camera-orbit="90.0deg 90.00deg 4m" => right
+// camera-orbit="270.0deg 90.00deg 4m" => left
+// camera-orbit="0.0deg 0.00deg 4m" => top
+// camera-orbit="0.0deg 180.00deg 4m" => bottom
 
-const canvas = createCanvas(width, height);
-const renderer = new THREE.WebGLRenderer({
-	canvas,
-});
-renderer.setSize(width, height);
+async function main() {
+  const browser = await puppeteer.launch({ headless: 'new' });
+  const page = await browser.newPage();
+  await page.goto('http://localhost:5500');
 
-// scene, camera, light setup
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-const ambientLight = new THREE.AmbientLight(0xcccccc, 0.4);
-scene.add(ambientLight);
-const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-directionalLight.position.set(1, 1, 0).normalize();
-scene.add(directionalLight);
+  let modelViewer = await page.$('model-viewer');
+  // wait model to load, change loaded property to true
+  await page.waitForFunction('document.querySelector("model-viewer").loaded');
+  console.log('model loaded');
 
-// camera position
-const cameraPositions = [
-	{ x: 0, y: 0, z: 3 }, // 전
-	{ x: 3, y: 0, z: 0 }, // 우
-	{ x: 0, y: 0, z: -3 }, // 후
-	{ x: -3, y: 0, z: 0 }, // 좌
-	{ x: 0, y: 3, z: 0 }, // 상
-	{ x: 0, y: -1.5, z: 0 }, // 하
-];
+  // Set camera orbit and wait for each view before taking a screenshot
 
-// VRM file load
-const loader = new GLTFLoader();
-// Install GLTFLoader plugin
-loader.register((parser) => {
-	return new VRMLoaderPlugin(parser);
-});
+  // front view
+  await modelViewer.evaluate((modelViewer) => {
+    modelViewer.setAttribute('camera-orbit', '180.0deg 90.00deg 4m');
+  });
+  await modelViewer.screenshot({ path: 'output/front.png' });
+  console.log('front screenshot taken');
 
-loader.load(
-	// URL of the VRM you want to load
-	"/root/vrm-to-vector/models/victoria-jeans.vrm",
-	// called when the resource is loaded
-	(glft) => {
-		// retrieve the VRM instance from gltf
-		const vrm = glft.userData.vrm;
-		// add the loaded vrm to the scene
-		scene.add(vrm.scene);
-		// render and save image
-		renderAndSavePng();
-	},
-	// called while loading is progressing
-	(progress) =>
-		console.log(
-			"Loading model...",
-			100.0 * (progress.loaded / progress.total),
-			"%"
-		),
-	// called when loading has errors
-	(error) => console.error(error)
-);
+  // back view
+  await page.reload();
+  await page.waitForFunction('document.querySelector("model-viewer").loaded');
+  modelViewer = await page.$('model-viewer');
+  await modelViewer.evaluate((modelViewer) => {
+    modelViewer.setAttribute('camera-orbit', '0.0deg 90.00deg 4m');
+  });
+  await modelViewer.screenshot({ path: 'output/back.png' });
+  console.log('back screenshot taken');
 
-function renderAndSavePng() {
-	cameraPositions.forEach((position, index) => {
-		// set camera position
-		camera.position.set(position.x, position.y, position.z);
-		camera.lookAt(scene.position);
-		// render scene
-		renderer.render(scene, camera);
-		// capture and save the rendered image
-    const webGLContext = renderer.getContext();
-    const pixels = new Uint8Array(width * height * 4);
-    webGLContext.readPixels(0, 0, width, height, webGLContext.RGBA, webGLContext.UNSIGNED_BYTE, pixels);
-    const png = new PNG({ width, height });
-    for (let i = 0; i < pixels.length; i++) {
-      png.data[i] = pixels[i];
-    }
+  // right view
+  await page.reload();
+  await page.waitForFunction('document.querySelector("model-viewer").loaded');
+  modelViewer = await page.$('model-viewer');
+  await modelViewer.evaluate((modelViewer) => {
+    modelViewer.setAttribute('camera-orbit', '90.0deg 90.00deg 4m');
+  });
+  await modelViewer.screenshot({ path: 'output/right.png' });
+  console.log('right screenshot taken');
 
-    png.pack().pipe(fs.createWriteStream(`./output/cubemap_${index}.png`));
-	});
+  // left view
+  await page.reload();
+  await page.waitForFunction('document.querySelector("model-viewer").loaded');
+  modelViewer = await page.$('model-viewer');
+  await modelViewer.evaluate((modelViewer) => {
+    modelViewer.setAttribute('camera-orbit', '270.0deg 90.00deg 4m');
+  });
+  await modelViewer.screenshot({ path: 'output/left.png' });
+  console.log('left screenshot taken');
+
+  // top view
+  await page.reload();
+  await page.waitForFunction('document.querySelector("model-viewer").loaded');
+  modelViewer = await page.$('model-viewer');
+  await modelViewer.evaluate((modelViewer) => {
+    modelViewer.setAttribute('camera-orbit', '0.0deg 0.00deg 4m');
+  });
+  await modelViewer.screenshot({ path: 'output/top.png' });
+  console.log('top screenshot taken');
+
+  // bottom view
+  await page.reload();
+  await page.waitForFunction('document.querySelector("model-viewer").loaded');
+  modelViewer = await page.$('model-viewer');
+  await modelViewer.evaluate((modelViewer) => {
+    modelViewer.setAttribute('camera-orbit', '0.0deg 180.00deg 4m');
+  });
+  await modelViewer.screenshot({ path: 'output/bottom.png' });
+  console.log('bottom screenshot taken');
+
+  await browser.close();
 }
+
+main();

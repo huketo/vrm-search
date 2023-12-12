@@ -22,15 +22,6 @@
 	"author": "huketo",
 	"license": "MIT",
 	"dependencies": {
-		"@pixiv/three-vrm": "^2.0.6",
-		"base64-js": "^1.5.1",
-		"canvas": "^2.11.2",
-		"events": "^3.3.0",
-		"fetch": "^1.1.0",
-		"fs": "^0.0.1-security",
-		"gl": "^6.0.2",
-		"node-three-gltf": "github:huketo/node-three-gltf#v1.4.1",
-		"pngjs": "^7.0.0",
-		"three": "^0.154.0"
+		"puppeteer": "^21.6.0"
 	}
 }

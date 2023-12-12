@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Model Viewer</title>
+  </head>
+  <body>
+    <!-- Import the component -->
+    <script
+      type="module"
+      src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"
+    ></script>
+
+    <!-- Use it like any other HTML element -->
+    <model-viewer
+      alt="Neil Armstrong's Spacesuit from the Smithsonian Digitization Programs Office and National Air and Space Museum"
+      src="models/victoria-jeans.glb"
+      shadow-intensity="1"
+      camera-orbit="180.0deg 90.00deg 4m"
+      min-camera-orbit="auto 0deg auto"
+      max-camera-orbit="auto 180deg auto"
+      style="width: 600px; height: 900px"
+    ></model-viewer>
+  </body>
+</html>

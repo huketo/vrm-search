@@ -2,6 +2,8 @@
 
 ## Usage
 
+https://pptr.dev/troubleshooting#running-puppeteer-on-wsl-windows-subsystem-for-linux
+
 ```bash
 npm install
 node index.js
