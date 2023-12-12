@@ -1,27 +1,28 @@
 {
-	"name": "vrm-to-vector",
-	"version": "1.0.0",
-	"description": "A project for AI analysis of 3D models, involving the conversion of VRM files to a cubemap format and storing them in a vector database.",
-	"main": "index.js",
-	"type": "module",
-	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
-	},
-	"repository": {
-		"type": "git",
-		"url": "github.com/huketo/vrm-to-vector.git"
-	},
-	"keywords": [
-		"vrm",
-		"3d",
-		"three.js",
-		"ai",
-		"vector",
-		"weaviate"
-	],
-	"author": "huketo",
-	"license": "MIT",
-	"dependencies": {
-		"puppeteer": "^21.6.0"
-	}
+  "name": "vrm-to-vector",
+  "version": "1.0.0",
+  "description": "A project for AI analysis of 3D models, involving the conversion of VRM files to a cubemap format and storing them in a vector database.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/huketo/vrm-to-vector.git"
+  },
+  "keywords": [
+    "vrm",
+    "3d",
+    "model-viewer",
+    "puppeteer",
+    "ai",
+    "vector",
+    "weaviate"
+  ],
+  "author": "huketo",
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer": "^21.6.0"
+  }
 }
