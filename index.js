@@ -1,5 +1,3 @@
-`use strict`;
-
 import * as THREE from "three";
 import { GLTFLoader } from "node-three-gltf";
 import { VRMLoaderPlugin } from "@pixiv/three-vrm";
