@@ -1,13 +1,14 @@
 import * as THREE from "three";
 import { GLTFLoader } from "node-three-gltf";
+// import { GLTFLoader } from "./lib/loaders/GLTFLoader.js";
 import { VRMLoaderPlugin } from "@pixiv/three-vrm";
-import { createCanvas } from "./lib/index.js";
+import { createCanvas } from "./lib/canvas/index.js";
 import fs from "fs";
 import { PNG } from "pngjs";
 
 // Create a canvas and renderer setup
-const width = 512;
-const height = 512;
+const width = 2048;
+const height = 2048;
 
 const canvas = createCanvas(width, height);
 const renderer = new THREE.WebGLRenderer({
@@ -31,7 +32,7 @@ const cameraPositions = [
 	{ x: 0, y: 0, z: -3 }, // 후
 	{ x: -3, y: 0, z: 0 }, // 좌
 	{ x: 0, y: 3, z: 0 }, // 상
-	{ x: 0, y: -3, z: 0 }, // 하
+	{ x: 0, y: -1.5, z: 0 }, // 하
 ];
 
 // VRM file load
@@ -44,7 +45,6 @@ loader.register((parser) => {
 loader.load(
 	// URL of the VRM you want to load
 	"/root/vrm-to-vector/models/victoria-jeans.vrm",
-
 	// called when the resource is loaded
 	(glft) => {
 		// retrieve the VRM instance from gltf
