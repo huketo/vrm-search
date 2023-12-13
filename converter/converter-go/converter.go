@@ -16,7 +16,7 @@ func convert(input string, output string) {
 		panic(err)
 	}
 
-	// Save GLTF file
+	// Save GLB file
 	gltf.SaveBinary(doc, output)
 }
 
