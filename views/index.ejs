@@ -15,10 +15,10 @@
 		<!-- Use it like any other HTML element -->
 		<model-viewer
 			src="<%= modelSrc %>"
+			camera-orbit="<%= cameraOrbit %>"
 			shadow-intensity="1"
-			camera-orbit="180.0deg 90.00deg 4m"
-			min-camera-orbit="auto 0deg auto"
-			max-camera-orbit="auto 180deg auto"
+			min-camera-orbit="-180deg 0deg auto"
+			max-camera-orbit="180deg 180deg auto"
 			style="width: 600px; height: 900px"
 		></model-viewer>
 	</body>

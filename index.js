@@ -4,110 +4,112 @@ import puppeteer from "puppeteer";
 import path from "path";
 import { convertVrmToGlb } from "./converter/converter.js";
 
-const vrmPath = path.resolve("./models/meebit_09842.vrm");
-const glbPath = path.resolve("./models/meebit_09842.glb");
+// parse command line arguments
+const args = process.argv.slice(2);
 
-// convert `vrm` to `glb` and set src attribute to model path
-await convertVrmToGlb(vrmPath, glbPath);
+let inputPath;
+let outputPath;
+let modelName;
+// -i option
+args.forEach((arg, i) => {
+	if (arg === "-i") {
+		inputPath = args[i + 1];
+	}
+});
+
+// invalid arguments
+if (!inputPath) {
+	console.error("Usage: node script.js -i <path_to_vrm_file>");
+	process.exit(1);
+}
+// invalid file extension, Input file must be '.vrm' or '.gltf' or '.glb'
+if (!inputPath.endsWith(".vrm") && !inputPath.endsWith(".gltf") && !inputPath.endsWith(".glb")) {
+  console.error("Input file must be '.vrm' or '.gltf' or '.glb'");
+  process.exit(1);
+}
+
+
+// extract model name from inputPath
+if (inputPath.endsWith(".vrm")) {
+  outputPath = inputPath.replace(/\.vrm$/, ".glb");
+  modelName = path.basename(inputPath, ".vrm");
+  // convert `vrm` to `glb` and set src attribute to model path
+  console.log("Converting VRM to GLB...");
+  console.log(`Input: ${inputPath}`);
+  console.log(`Output: ${outputPath}`);
+  await convertVrmToGlb(inputPath, outputPath);
+}
+if (inputPath.endsWith(".gltf")) {
+  modelName = path.basename(inputPath, ".gltf");
+}
+if (inputPath.endsWith(".glb")) {
+  modelName = path.basename(inputPath, ".glb");
+}
 
 const app = express();
 const server = http.createServer(app);
 
+// TODO: get .env variables
 const hostname = "localhost";
 const port = 5500;
 
 app.set("view engine", "ejs");
 app.set("views", "./views");
 
-app.get("/", (req, res) => {
-	res.render("index", { modelSrc: "meebit_09842.glb" });
-});
+const orbitViews = {
+	front: "180.0deg 90.00deg 4m",
+	back: "0.0deg 90.00deg 4m",
+	right: "90.0deg 90.00deg 4m",
+	left: "-90.0deg 90.00deg 4m",
+	top: "0.0deg 0.00deg 4m",
+	bottom: "0.0deg 180.00deg 4m",
+};
 
-app.use(express.static("models"));
+// add routes for each view
+for (const [view, orbit] of Object.entries(orbitViews)) {
+	app.get(`/${view}`, (req, res) => {
+		res.render("index", {
+			modelSrc: `${modelName}.glb`,
+			cameraOrbit: orbit,
+		});
+	});
+}
+
+// serve static files
+const inputDir = path.dirname(inputPath);
+app.use(express.static(inputDir));
 
 server.listen(port, hostname, async () => {
 	console.log(`Server running at http://${hostname}:${port}/`);
-
-	// camera-orbit="180.0deg 90.00deg 4m" => front
-	// camera-orbit="0.0deg 90.00deg 4m" => back
-	// camera-orbit="90.0deg 90.00deg 4m" => right
-	// camera-orbit="270.0deg 90.00deg 4m" => left
-	// camera-orbit="0.0deg 0.00deg 4m" => top
-	// camera-orbit="0.0deg 180.00deg 4m" => bottom
 
 	const browser = await puppeteer.launch({
 		headless: "new",
 		args: ["--no-sandbox"],
 	});
-	const page = await browser.newPage();
-	await page.goto("http://localhost:5500");
 
-	let modelViewer = await page.$("model-viewer");
-	// wait model to load, change loaded property to true
-	await page.waitForFunction('document.querySelector("model-viewer").loaded');
-	console.log("model loaded");
+	// take screenshots for each view in parallel
+	const screenshotPromises = Object.entries(orbitViews).map(
+		([view, orbit]) => {
+			return takeScreenshot(browser, view, orbit, modelName);
+		}
+	);
 
-	// Set camera orbit and wait for each view before taking a screenshot
+	// wait for all screenshots to be taken
+	await Promise.all(screenshotPromises);
 
-	// front view
-	await modelViewer.evaluate((modelViewer) => {
-		modelViewer.setAttribute("camera-orbit", "180.0deg 90.00deg 4m");
-	});
-	await modelViewer.screenshot({ path: "output/front.png" });
-	console.log("front screenshot taken");
-
-	// back view
-	await page.reload();
-	await page.waitForFunction('document.querySelector("model-viewer").loaded');
-	modelViewer = await page.$("model-viewer");
-	await modelViewer.evaluate((modelViewer) => {
-		modelViewer.setAttribute("camera-orbit", "0.0deg 90.00deg 4m");
-	});
-	await modelViewer.screenshot({ path: "output/back.png" });
-	console.log("back screenshot taken");
-
-	// right view
-	await page.reload();
-	await page.waitForFunction('document.querySelector("model-viewer").loaded');
-	modelViewer = await page.$("model-viewer");
-	await modelViewer.evaluate((modelViewer) => {
-		modelViewer.setAttribute("camera-orbit", "90.0deg 90.00deg 4m");
-	});
-	await modelViewer.screenshot({ path: "output/right.png" });
-	console.log("right screenshot taken");
-
-	// left view
-	await page.reload();
-	await page.waitForFunction('document.querySelector("model-viewer").loaded');
-	modelViewer = await page.$("model-viewer");
-	await modelViewer.evaluate((modelViewer) => {
-		modelViewer.setAttribute("camera-orbit", "270.0deg 90.00deg 4m");
-	});
-	await modelViewer.screenshot({ path: "output/left.png" });
-	console.log("left screenshot taken");
-
-	// top view
-	await page.reload();
-	await page.waitForFunction('document.querySelector("model-viewer").loaded');
-	modelViewer = await page.$("model-viewer");
-	await modelViewer.evaluate((modelViewer) => {
-		modelViewer.setAttribute("camera-orbit", "0.0deg 0.00deg 4m");
-	});
-	await modelViewer.screenshot({ path: "output/top.png" });
-	console.log("top screenshot taken");
-
-	// bottom view
-	await page.reload();
-	await page.waitForFunction('document.querySelector("model-viewer").loaded');
-	modelViewer = await page.$("model-viewer");
-	await modelViewer.evaluate((modelViewer) => {
-		modelViewer.setAttribute("camera-orbit", "0.0deg 180.00deg 4m");
-	});
-	await modelViewer.screenshot({ path: "output/bottom.png" });
-	console.log("bottom screenshot taken");
-
+	// close browser instance
 	await browser.close();
-
 	// close server
 	server.close();
 });
+
+// take screenshot for a view
+async function takeScreenshot(browser, view, orbit, modelName) {
+	const page = await browser.newPage();
+	await page.goto(`http://localhost:5500/${view}`);
+	const modelViewer = await page.$("model-viewer");
+	await page.waitForFunction('document.querySelector("model-viewer").loaded');
+	await modelViewer.screenshot({ path: `output/${modelName}_${view}.png` });
+	console.log(`${view} screenshot taken`);
+	await page.close();
+}
