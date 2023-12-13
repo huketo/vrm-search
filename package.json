@@ -23,6 +23,9 @@
   "author": "huketo",
   "license": "MIT",
   "dependencies": {
-    "puppeteer": "^21.6.0"
+    "fs": "^0.0.1-security",
+    "path": "^0.12.7",
+    "puppeteer": "^21.6.0",
+    "url": "^0.11.3"
   }
 }
