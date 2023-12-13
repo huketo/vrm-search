@@ -20,3 +20,10 @@
 npm install
 node index.js
 ```
+
+## Features
+
+- [x] `.vrm` file convert to `.glb`
+- [x] Create cubemap images with a `.glb` file by using `puppeteer`
+- [ ] Save the cube map images in the vector database using the weaviate API
+- [ ] Similar Query
