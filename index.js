@@ -2,7 +2,7 @@ import http from "http";
 import express from "express";
 import puppeteer from "puppeteer";
 import path from "path";
-import { convertVrmToGlb } from "./converter/converter.js";
+import fs from "fs";
 
 // parse command line arguments
 const args = process.argv.slice(2);
@@ -23,27 +23,26 @@ if (!inputPath) {
 	process.exit(1);
 }
 // invalid file extension, Input file must be '.vrm' or '.gltf' or '.glb'
-if (!inputPath.endsWith(".vrm") && !inputPath.endsWith(".gltf") && !inputPath.endsWith(".glb")) {
-  console.error("Input file must be '.vrm' or '.gltf' or '.glb'");
-  process.exit(1);
+if (
+	!inputPath.endsWith(".vrm") &&
+	!inputPath.endsWith(".glb")
+) {
+	console.error("Input file must be '.vrm' or '.glb'");
+	process.exit(1);
 }
-
 
 // extract model name from inputPath
 if (inputPath.endsWith(".vrm")) {
-  outputPath = inputPath.replace(/\.vrm$/, ".glb");
-  modelName = path.basename(inputPath, ".vrm");
-  // convert `vrm` to `glb` and set src attribute to model path
-  console.log("Converting VRM to GLB...");
-  console.log(`Input: ${inputPath}`);
-  console.log(`Output: ${outputPath}`);
-  await convertVrmToGlb(inputPath, outputPath);
-}
-if (inputPath.endsWith(".gltf")) {
-  modelName = path.basename(inputPath, ".gltf");
+	outputPath = inputPath.replace(/\.vrm$/, ".glb");
+	modelName = path.basename(inputPath, ".vrm");
+	// convert `vrm` to `glb` and set src attribute to model path
+	console.log("Converting VRM to GLB...");
+	console.log(`Input: ${inputPath}`);
+	console.log(`Output: ${outputPath}`);
+	fs.copyFileSync(inputPath, outputPath);
 }
 if (inputPath.endsWith(".glb")) {
-  modelName = path.basename(inputPath, ".glb");
+	modelName = path.basename(inputPath, ".glb");
 }
 
 const app = express();
@@ -51,7 +50,7 @@ const server = http.createServer(app);
 
 // TODO: get .env variables
 const hostname = "localhost";
-const port = 5500;
+const port = 3000;
 
 app.set("view engine", "ejs");
 app.set("views", "./views");
@@ -77,6 +76,7 @@ for (const [view, orbit] of Object.entries(orbitViews)) {
 
 // serve static files
 const inputDir = path.dirname(inputPath);
+console.log(`Serving static files from ${inputDir}`);
 app.use(express.static(inputDir));
 
 server.listen(port, hostname, async () => {
@@ -106,10 +106,46 @@ server.listen(port, hostname, async () => {
 // take screenshot for a view
 async function takeScreenshot(browser, view, orbit, modelName) {
 	const page = await browser.newPage();
-	await page.goto(`http://localhost:5500/${view}`);
+	await page.goto(`http://localhost:${port}/${view}`);
 	const modelViewer = await page.$("model-viewer");
 	await page.waitForFunction('document.querySelector("model-viewer").loaded');
-	await modelViewer.screenshot({ path: `output/${modelName}_${view}.png` });
+	// get model-viewer cameraOrbit attribute
+	const initialRadius = await page.evaluate(
+		() => document.querySelector("model-viewer").getCameraOrbit().radius
+	);
+	const cameraOrbit = getCameraOrbit(view, initialRadius);
+	// set model-viewer cameraOrbit attribute
+	await page.evaluate(
+		(cameraOrbit) =>
+			(document.querySelector("model-viewer").cameraOrbit = cameraOrbit),
+		cameraOrbit
+	);
+
+	// create directory 'images/${modelName}' if it doesn't exist
+	const dir = path.join("images", modelName);
+	if (!fs.existsSync(dir)) {
+		fs.mkdirSync(dir);
+	}
+	await modelViewer.screenshot({
+		path: `images/${modelName}/${modelName}___${view}.png`,
+	});
 	console.log(`${view} screenshot taken`);
 	await page.close();
+}
+
+// get cameraOrbit attribute for model-viewer
+function getCameraOrbit(view, radius) {
+	if (view === "front") {
+		return `180.0deg 90.00deg ${radius}m`;
+	} else if (view === "back") {
+		return `0.0deg 90.00deg ${radius}m`;
+	} else if (view === "right") {
+		return `90.0deg 90.00deg ${radius}m`;
+	} else if (view === "left") {
+		return `-90.0deg 90.00deg ${radius}m`;
+	} else if (view === "top") {
+		return `0.0deg 0.00deg ${radius}m`;
+	} else if (view === "bottom") {
+		return `0.0deg 180.00deg ${radius}m`;
+	}
 }

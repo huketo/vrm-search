@@ -18,7 +18,7 @@
 
 ```bash
 npm install
-node index.js
+node index.js -i <input file path>
 ```
 
 ## Features

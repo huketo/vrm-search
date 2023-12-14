@@ -1,2 +1,4 @@
 node_modules
-output/*
+models/*.glb
+images/*
+weaviate_data
