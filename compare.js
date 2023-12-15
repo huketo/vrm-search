@@ -6,6 +6,7 @@ import {
 	writeFileSync,
 	existsSync,
 	mkdirSync,
+	unlinkSync,
 } from "fs";
 
 const client = weaviate.client({
@@ -41,6 +42,8 @@ async function addDatas() {
 
 	// create promises for each image directory
 	imgDirs.map(async (imgDir) => {
+		// ignore README.md
+		if (imgDir.includes("README")) return;
 		const imgFiles = readdirSync(`./images/${imgDir}`);
 		// get Image 'model___joined.png' from each directory
 		const joinedImg = imgFiles.find((imgFile) =>
@@ -64,14 +67,18 @@ async function addDatas() {
 	await Promise.all(promises);
 }
 
+// wait 3s for data to be indexed
+console.log("waiting 3s for data to be indexed...");
+await new Promise((resolve) => setTimeout(resolve, 3000));
+
 // Search data
-const testModel = "meebit_09842";
+const testModel = "Sendagaya_Shibu";
 const testImgPath = `./images/${testModel}/${testModel}___joined.png`;
 const testImg = readFileSync(testImgPath);
 const testImgBase64 = Buffer.from(testImg).toString("base64");
 console.log(`Searching for ${testModel}___joined.png...`);
 // copy search input image to result folder
-writeFileSync(`./result/input.png`, testImgBase64, "base64");
+writeFileSync(`./results/input.png`, testImgBase64, "base64");
 
 const searchRes = await client.graphql
 	.get()
@@ -81,18 +88,29 @@ const searchRes = await client.graphql
 	.withLimit(5)
 	.do();
 
-for (let i = 0; i < searchRes.data.Get.VrmModel.length; i++) {
-	console.log(`Result ${i + 1}: ${searchRes.data.Get.VrmModel[i].title}`);
-	if (!existsSync("./results")) {
-		mkdirSync("./results");
-	}
-	writeFileSync(
-		`./results/${i + 1}.png`,
-		searchRes.data.Get.VrmModel[i].image,
-		"base64"
-	);
+// remove all images before write
+if (!existsSync("./results")) {
+	mkdirSync("./results");
 }
+const resultFiles = readdirSync("./results");
+resultFiles.map((resultFile) => {
+	if (resultFile.includes("input")) return;
+	if (resultFile.includes("result_")) {
+		console.log(`Removing ${resultFile}`);
+		unlinkSync(`./results/${resultFile}`);
+	}
+});
 
 if (!searchRes.data.Get.VrmModel.length) {
 	console.log("No result found");
+} else {
+	for (let i = 0; i < searchRes.data.Get.VrmModel.length; i++) {
+		console.log(`Result ${i + 1}: ${searchRes.data.Get.VrmModel[i].title}`);
+
+		writeFileSync(
+			`./results/result_${i + 1}.png`,
+			searchRes.data.Get.VrmModel[i].image,
+			"base64"
+		);
+	}
 }
