@@ -72,7 +72,7 @@ console.log("waiting 3s for data to be indexed...");
 await new Promise((resolve) => setTimeout(resolve, 3000));
 
 // Search data
-const testModel = "Sendagaya_Shibu";
+const testModel = "AvatarSample_A";
 const testImgPath = `./images/${testModel}/${testModel}___joined.png`;
 const testImg = readFileSync(testImgPath);
 const testImgBase64 = Buffer.from(testImg).toString("base64");
