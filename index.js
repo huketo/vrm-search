@@ -1,8 +1,10 @@
 import http from "http";
 import express from "express";
-import puppeteer from "puppeteer";
+import puppeteer, { Browser } from "puppeteer";
 import path from "path";
 import fs from "fs";
+
+import { joinImageHorizontally } from "./utils/joinImage.js";
 
 // parse command line arguments
 const args = process.argv.slice(2);
@@ -99,11 +101,28 @@ server.listen(port, hostname, async () => {
 
 	// close browser instance
 	await browser.close();
+
+	// compose images
+	const imagePaths = Object.entries(orbitViews).map(
+		([view]) => `images/${modelName}/${modelName}___${view}.png`
+	);
+
+	// join images horizontally
+	const joinedImagePath = `images/${modelName}/${modelName}___joined.png`;
+	await joinImageHorizontally(imagePaths, joinedImagePath);
+
 	// close server
 	server.close();
 });
 
-// take screenshot for a view
+/**
+ * @name takeScreenshot
+ * @description take screenshot of model-viewer
+ * @param {Browser} browser 
+ * @param {String} view 
+ * @param {String?} orbit 
+ * @param {String} modelName 
+ */
 async function takeScreenshot(browser, view, orbit, modelName) {
 	const page = await browser.newPage();
 	await page.goto(`http://localhost:${port}/${view}`);
@@ -133,7 +152,12 @@ async function takeScreenshot(browser, view, orbit, modelName) {
 	await page.close();
 }
 
-// get cameraOrbit attribute for model-viewer
+/**
+ * @description get cameraOrbit attribute for model-viewer's cameraOrbit radius
+ * @param {String} view 
+ * @param {String} radius 
+ * @returns {String} cameraOrbit
+ */
 function getCameraOrbit(view, radius) {
 	if (view === "front") {
 		return `180.0deg 90.00deg ${radius}m`;

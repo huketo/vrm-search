@@ -1,6 +1,12 @@
 import weaviate from "weaviate-ts-client";
 import { cubemapSchemaConfig } from "./schema/cubemap.js";
-import { readFileSync, readdirSync, writeFileSync } from "fs";
+import {
+	readFileSync,
+	readdirSync,
+	writeFileSync,
+	existsSync,
+	mkdirSync,
+} from "fs";
 
 const client = weaviate.client({
 	scheme: "http",
@@ -9,10 +15,16 @@ const client = weaviate.client({
 
 const schemeRes = await client.schema.getter().do();
 
+// Check if schema already exists
 if (!schemeRes.classes.length) {
 	console.log("schema is empty, creating schema...");
 	await client.schema.classCreator().withClass(cubemapSchemaConfig).do();
 	console.log("schema created");
+} else {
+	console.log("schema already exists, deleting schema...");
+	await client.schema.classDeleter().withClassName("VrmModel").do();
+	console.log("schema deleted, creating schema...");
+	await client.schema.classCreator().withClass(cubemapSchemaConfig).do();
 }
 
 const data = await client.data.getter().withClassName("VrmModel").do();
@@ -30,28 +42,21 @@ async function addDatas() {
 	// create promises for each image directory
 	imgDirs.map(async (imgDir) => {
 		const imgFiles = readdirSync(`./images/${imgDir}`);
-		let properties = {
-			front: null,
-			back: null,
-			left: null,
-			right: null,
-			top: null,
-			bottom: null,
-			title: imgDir,
-		};
+		// get Image 'model___joined.png' from each directory
+		const joinedImg = imgFiles.find((imgFile) =>
+			imgFile.includes("___joined")
+		);
 		// insert images blob to properties
-		imgFiles.map(async (imgFile) => {
-			const view = imgFile.split("___")[1].split(".")[0];
-			const img = readFileSync(`./images/${imgDir}/${imgFile}`);
-			const b64 = Buffer.from(img).toString("base64");
-			properties[view] = b64;
-		});
-
+		const img = readFileSync(`./images/${imgDir}/${joinedImg}`);
+		const b64 = Buffer.from(img).toString("base64");
 		// insert data to weaviate
 		await client.data
 			.creator()
 			.withClassName("VrmModel")
-			.withProperties(properties)
+			.withProperties({
+				title: imgDir,
+				image: b64,
+			})
 			.do();
 	});
 
@@ -60,29 +65,34 @@ async function addDatas() {
 }
 
 // Search data
-let testImgs = {
-	front: null,
-	back: null,
-	left: null,
-	right: null,
-	top: null,
-	bottom: null,
-};
-const testImgFiles = readdirSync("./images/Darkness_Shibu");
-testImgFiles.map(async (imgFile) => {
-	const view = imgFile.split("___")[1].split(".")[0];
-	const img = readFileSync(`./images/Darkness_Shibu/${imgFile}`);
-	const b64 = Buffer.from(img).toString("base64");
-	testImgs[view] = b64;
-});
+const testModel = "meebit_09842";
+const testImgPath = `./images/${testModel}/${testModel}___joined.png`;
+const testImg = readFileSync(testImgPath);
+const testImgBase64 = Buffer.from(testImg).toString("base64");
+console.log(`Searching for ${testModel}___joined.png...`);
+// copy search input image to result folder
+writeFileSync(`./result/input.png`, testImgBase64, "base64");
 
 const searchRes = await client.graphql
 	.get()
 	.withClassName("VrmModel")
-	.withFields(["front", "back", "left", "right", "top", "bottom", "title"])
-	.withNearImage({ image: testImgs.front })
-	.withLimit(2)
+	.withFields(["title", "image"])
+	.withNearImage({ image: testImgBase64 })
+	.withLimit(5)
 	.do();
 
-const result = searchRes.data.Get.VrmModel[1];
-console.log(result);
+for (let i = 0; i < searchRes.data.Get.VrmModel.length; i++) {
+	console.log(`Result ${i + 1}: ${searchRes.data.Get.VrmModel[i].title}`);
+	if (!existsSync("./result")) {
+		mkdirSync("./result");
+	}
+	writeFileSync(
+		`./result/${i + 1}.png`,
+		searchRes.data.Get.VrmModel[i].image,
+		"base64"
+	);
+}
+
+if (!searchRes.data.Get.VrmModel.length) {
+	console.log("No result found");
+}

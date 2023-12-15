@@ -29,6 +29,7 @@
     "fs": "^0.0.1-security",
     "path": "^0.12.7",
     "puppeteer": "^21.6.0",
+    "sharp": "^0.33.0",
     "url": "^0.11.3",
     "weaviate-ts-client": "^2.0.0"
   }
