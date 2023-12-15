@@ -8,6 +8,11 @@
 
 > [How to Use in Puppeteer WSL](https://pptr.dev/troubleshooting#running-puppeteer-on-wsl-windows-subsystem-for-linux)
 
+#### Sample Cubemap Images (6 images)
+
+![cubemap](./cubemap_sample.png)
+: front, back, right, left, top, bottom
+
 ### 3. Save the cube map images in the vector database using the weaviate API
 
 ### 4. Similar Query
