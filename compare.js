@@ -83,11 +83,11 @@ const searchRes = await client.graphql
 
 for (let i = 0; i < searchRes.data.Get.VrmModel.length; i++) {
 	console.log(`Result ${i + 1}: ${searchRes.data.Get.VrmModel[i].title}`);
-	if (!existsSync("./result")) {
-		mkdirSync("./result");
+	if (!existsSync("./results")) {
+		mkdirSync("./results");
 	}
 	writeFileSync(
-		`./result/${i + 1}.png`,
+		`./results/${i + 1}.png`,
 		searchRes.data.Get.VrmModel[i].image,
 		"base64"
 	);
