@@ -1,7 +1,5 @@
 # VRM to Vector
 
-<!-- 어떻게 동작하는 가 -->
-
 ## How it works
 
 ### 1. `.vrm` file convert to `.glb`
@@ -16,14 +14,21 @@
 
 ## Usage
 
+### 1. Make test images with `puppeteer` and `model-viewer`
+
 ```bash
-npm install
-node index.js -i <input file path>
+./shot.sh
+```
+
+### 2. Similar Search
+
+```bash
+node similar.js
 ```
 
 ## Features
 
 - [x] `.vrm` file convert to `.glb`
 - [x] Create cubemap images with a `.glb` file by using `puppeteer`
-- [ ] Save the cube map images in the vector database using the weaviate API
-- [ ] Similar Query
+- [x] Save the cube map images in the vector database using the weaviate API
+- [x] Similar Search Query
